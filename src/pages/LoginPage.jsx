@@ -3,6 +3,7 @@ import { Container, Row, Col, Card, Form, Button, Spinner, Alert } from 'react-b
 import { Link, useNavigate } from 'react-router-dom';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaGoogle } from 'react-icons/fa';
 import loginImg from '../assets/login.png';
+import authService from '../services/authService';
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
@@ -17,15 +18,14 @@ const LoginPage = () => {
         setError('');
         setIsLoading(true);
 
-        // Simulate API call
-        setTimeout(() => {
+        try {
+            await authService.login(email, password);
+            navigate('/dashboard');
+        } catch (err) {
+            setError(err.message || 'Login failed. Please check your credentials.');
+        } finally {
             setIsLoading(false);
-            if (email === 'test@example.com' && password === 'password') {
-                navigate('/dashboard'); // Redirect to dashboard
-            } else {
-                setError('Invalid email or password.');
-            }
-        }, 2000);
+        }
     };
 
     return (

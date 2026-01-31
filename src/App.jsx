@@ -6,7 +6,7 @@ import LoginPage from './pages/LoginPage';
 
 import DashboardPage from './pages/DashboardPage';
 import TransferMoneyPage from './pages/TransferMoneyPage';
-import TransactionHistoryPage from './pages/TransactionHistoryPage';
+import TransactionsPage from './pages/TransactionsPage';
 import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
 import ConvertCurrencyPage from './pages/ConvertCurrencyPage';
@@ -21,7 +21,7 @@ function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/transfer" element={<TransferMoneyPage />} />
         <Route path="/convert" element={<ConvertCurrencyPage />} />
-        <Route path="/transactions" element={<TransactionHistoryPage />} />
+        <Route path="/transactions" element={<TransactionsPage />} />
         <Route path="/reports" element={<ReportsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Routes>

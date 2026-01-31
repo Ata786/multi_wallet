@@ -1,18 +1,26 @@
 import React from 'react';
 import { Container, Row, Col, Card, Form, Button } from 'react-bootstrap';
 import { useForm } from 'react-hook-form';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FaUser, FaEnvelope, FaPhone, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import registrationImg from '../assets/registration.png';
+import authService from '../services/authService';
 
 const RegistrationPage = () => {
     const { register, handleSubmit, watch, formState: { errors, isValid } } = useForm({ mode: 'onChange' });
     const [showPassword, setShowPassword] = React.useState(false);
     const password = watch('password', '');
 
-    const onSubmit = (data) => {
-        console.log(data);
-        alert('Registration Successful (Demo)');
+    const navigate = useNavigate();
+    const onSubmit = async (data) => {
+        try {
+            await authService.register(data.fullName, data.email, data.password, data.phone, data.country);
+            alert('Registration Successful! Please login.');
+            navigate('/login');
+        } catch (error) {
+            console.error(error);
+            alert('Registration failed: ' + error.message);
+        }
     };
 
     const getPasswordStrength = (pass) => {
