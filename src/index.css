@@ -1,0 +1,50 @@
+:root {
+  --primary-blue: #2563eb;
+  --accent-purple: #7c3aed;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: #f8f9fa;
+  margin: 0;
+  padding: 0;
+}
+
+.bg-gradient-landing {
+  background: linear-gradient(135deg, var(--primary-blue), var(--accent-purple));
+  min-height: 100vh;
+  color: white;
+}
+
+.text-primary-custom {
+  color: var(--primary-blue) !important;
+}
+
+.text-purple {
+  color: var(--accent-purple) !important;
+}
+
+.btn-gradient {
+  background: linear-gradient(90deg, var(--primary-blue), var(--accent-purple));
+  border: none;
+  color: white;
+  transition: opacity 0.3s ease;
+}
+
+.btn-gradient:hover {
+  opacity: 0.9;
+  color: white;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+}
+
+.form-control:focus {
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 0.25rem rgba(37, 99, 235, 0.25);
+}
