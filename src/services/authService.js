@@ -151,6 +151,92 @@ const getExchangeRate = (from, to) => {
         .then(res => res.json());
 };
 
+// Profile APIs
+const getProfile = (userId) => {
+    return fetch(`http://localhost:8080/api/user/${userId}`)
+        .then(res => res.json());
+};
+
+const updateProfile = (userId, data) => {
+    return fetch(`http://localhost:8080/api/user/${userId}/profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    }).then(async res => {
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Update failed');
+        // Update local storage
+        const user = getCurrentUser();
+        if (user && result.user) {
+            localStorage.setItem('user', JSON.stringify({ ...user, ...result.user }));
+        }
+        return result;
+    });
+};
+
+const changePassword = (userId, currentPassword, newPassword) => {
+    return fetch(`http://localhost:8080/api/user/${userId}/change-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword })
+    }).then(async res => {
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Password change failed');
+        return result;
+    });
+};
+
+// Notification APIs
+const getNotifications = (userId) => {
+    return fetch(`http://localhost:8080/api/user/${userId}/notifications`)
+        .then(res => res.json());
+};
+
+const getUnreadNotifications = (userId) => {
+    return fetch(`http://localhost:8080/api/user/${userId}/notifications/unread`)
+        .then(res => res.json());
+};
+
+const getUnreadNotificationCount = (userId) => {
+    return fetch(`http://localhost:8080/api/user/${userId}/notifications/count`)
+        .then(res => res.json());
+};
+
+const markNotificationRead = (notificationId) => {
+    return fetch(`http://localhost:8080/api/user/notifications/${notificationId}/read`, {
+        method: 'POST'
+    }).then(res => res.json());
+};
+
+const markAllNotificationsRead = (userId) => {
+    return fetch(`http://localhost:8080/api/user/${userId}/notifications/read-all`, {
+        method: 'POST'
+    }).then(res => res.json());
+};
+
+// Reports APIs
+const getReportSummary = (userId) => {
+    return fetch(`http://localhost:8080/api/reports/user/${userId}/summary`)
+        .then(res => res.json());
+};
+
+const getMonthlyReport = (userId, year, month) => {
+    let url = `http://localhost:8080/api/reports/user/${userId}/monthly`;
+    if (year && month) {
+        url += `?year=${year}&month=${month}`;
+    }
+    return fetch(url).then(res => res.json());
+};
+
+const exportTransactions = (userId, startDate, endDate) => {
+    let url = `http://localhost:8080/api/reports/user/${userId}/transactions/export`;
+    const params = [];
+    if (startDate) params.push(`startDate=${startDate}`);
+    if (endDate) params.push(`endDate=${endDate}`);
+    if (params.length) url += '?' + params.join('&');
+    return fetch(url).then(res => res.json());
+};
+
 export default {
     register,
     login,
@@ -167,5 +253,16 @@ export default {
     sendMoney,
     convertCurrency,
     getExchangeRates,
-    getExchangeRate
+    getExchangeRate,
+    getProfile,
+    updateProfile,
+    changePassword,
+    getNotifications,
+    getUnreadNotifications,
+    getUnreadNotificationCount,
+    markNotificationRead,
+    markAllNotificationsRead,
+    getReportSummary,
+    getMonthlyReport,
+    exportTransactions
 };
