@@ -20,12 +20,15 @@ public class Wallet {
     private String flag;
     private String name;
     @Column(name = "daily_change")
-    private double dailyChange; // Daily change percentage
+    private double dailyChange;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
     @JsonIgnore
     private User user;
+
+    @OneToMany(mappedBy = "wallet", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private java.util.List<Transaction> transactions;
 
     public Wallet(String currency, String symbol, double balance, String flag, String name, User user) {
         this.currency = currency;
@@ -34,5 +37,6 @@ public class Wallet {
         this.flag = flag;
         this.name = name;
         this.user = user;
+        this.transactions = new java.util.ArrayList<>();
     }
 }
