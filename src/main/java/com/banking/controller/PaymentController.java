@@ -10,10 +10,12 @@ import com.stripe.Stripe;
 import com.stripe.model.PaymentIntent;
 import com.stripe.param.PaymentIntentCreateParams;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,14 +23,20 @@ import java.util.Map;
 @RequestMapping("/api/payments")
 public class PaymentController {
 
+    @Value("${stripe.secret.key:}")
+    private String stripeSecretKey;
+
     @Autowired
     private WalletRepository walletRepository;
 
     @Autowired
     private TransactionRepository transactionRepository;
 
-    public PaymentController() {
-        Stripe.apiKey = "STRIPE_KEY_REMOVED";
+    @PostConstruct
+    public void init() {
+        if (stripeSecretKey != null && !stripeSecretKey.isEmpty()) {
+            Stripe.apiKey = stripeSecretKey;
+        }
     }
 
     @PostMapping("/create-intent")
