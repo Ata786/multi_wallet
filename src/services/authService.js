@@ -111,6 +111,46 @@ const confirmPayment = (paymentIntentId, walletId) => {
     });
 };
 
+// Transfer APIs
+const checkRecipient = (email, senderCurrency) => {
+    return fetch(`http://localhost:8080/api/transfer/check-recipient?email=${encodeURIComponent(email)}&senderCurrency=${senderCurrency}`)
+        .then(res => res.json());
+};
+
+const sendMoney = (senderWalletId, recipientEmail, amount, note) => {
+    return fetch(`http://localhost:8080/api/transfer/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ senderWalletId, recipientEmail, amount, note })
+    }).then(async res => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Transfer failed');
+        return data;
+    });
+};
+
+const convertCurrency = (fromWalletId, toWalletId, amount) => {
+    return fetch(`http://localhost:8080/api/transfer/convert`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fromWalletId, toWalletId, amount })
+    }).then(async res => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Conversion failed');
+        return data;
+    });
+};
+
+const getExchangeRates = () => {
+    return fetch(`http://localhost:8080/api/transfer/exchange-rates`)
+        .then(res => res.json());
+};
+
+const getExchangeRate = (from, to) => {
+    return fetch(`http://localhost:8080/api/transfer/exchange-rate?from=${from}&to=${to}`)
+        .then(res => res.json());
+};
+
 export default {
     register,
     login,
@@ -122,5 +162,10 @@ export default {
     getWalletStats,
     getUserTransactions,
     createPaymentIntent,
-    confirmPayment
+    confirmPayment,
+    checkRecipient,
+    sendMoney,
+    convertCurrency,
+    getExchangeRates,
+    getExchangeRate
 };

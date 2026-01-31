@@ -1,43 +1,51 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Card, Row, Col, Form, Button, InputGroup, Modal } from 'react-bootstrap';
+import { Container, Card, Row, Col, Form, Button, Modal, Spinner } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaSync, FaCheckCircle, FaExchangeAlt } from 'react-icons/fa'; // Changed Icon to FaSync or FaExchangeAlt
-import { motion, AnimatePresence } from 'framer-motion';
+import { FaArrowLeft, FaSync, FaCheckCircle, FaExchangeAlt } from 'react-icons/fa';
 import { NumericFormat } from 'react-number-format';
 import DashboardLayout from '../components/DashboardLayout';
-
-// Mock Data (Same as TransferMoneyPage essentially)
-const WALLETS = [
-    { id: 1, currency: 'USD', symbol: '$', balance: 1250.50, flag: '🇺🇸', name: 'USD Wallet' },
-    { id: 2, currency: 'EUR', symbol: '€', balance: 800.00, flag: '🇪🇺', name: 'EUR Wallet' },
-    { id: 3, currency: 'INR', symbol: '₹', balance: 5000.00, flag: '🇮🇳', name: 'INR Wallet' },
-];
+import authService from '../services/authService';
 
 const ConvertCurrencyPage = () => {
     const navigate = useNavigate();
-    const [fromWallet, setFromWallet] = useState(WALLETS[0]);
-    const [toWallet, setToWallet] = useState(WALLETS[1]);
+    const [user] = useState(authService.getCurrentUser());
+    const [wallets, setWallets] = useState([]);
+    const [fromWallet, setFromWallet] = useState(null);
+    const [toWallet, setToWallet] = useState(null);
     const [amount, setAmount] = useState('');
-    const [exchangeRate, setExchangeRate] = useState(0.92);
+    const [exchangeRate, setExchangeRate] = useState(1);
     const [isProcessing, setIsProcessing] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
-    const [transactionId, setTransactionId] = useState('');
+    const [conversionResult, setConversionResult] = useState(null);
 
     useEffect(() => {
-        const interval = setInterval(() => {
-            const change = (Math.random() - 0.5) * 0.01;
-            setExchangeRate(prev => parseFloat((prev + change).toFixed(4)));
-        }, 8000);
-        return () => clearInterval(interval);
-    }, []);
+        if (user) {
+            authService.getWallets(user.id).then(data => {
+                setWallets(data);
+                if (data.length > 0) {
+                    setFromWallet(data[0]);
+                    if (data.length > 1) setToWallet(data[1]);
+                }
+            }).catch(console.error);
+        }
+    }, [user]);
+
+    // Fetch exchange rate when wallets change
+    useEffect(() => {
+        if (fromWallet && toWallet && fromWallet.id !== toWallet.id) {
+            authService.getExchangeRate(fromWallet.currency, toWallet.currency)
+                .then(data => setExchangeRate(data.rate))
+                .catch(() => setExchangeRate(1));
+        }
+    }, [fromWallet, toWallet]);
 
     // Ensure wallets are different
     useEffect(() => {
-        if (fromWallet.id === toWallet.id) {
-            const nextWallet = WALLETS.find(w => w.id !== fromWallet.id);
+        if (fromWallet && toWallet && fromWallet.id === toWallet.id) {
+            const nextWallet = wallets.find(w => w.id !== fromWallet.id);
             if (nextWallet) setToWallet(nextWallet);
         }
-    }, [fromWallet, toWallet]);
+    }, [fromWallet, toWallet, wallets]);
 
     const handleSwap = () => {
         const temp = fromWallet;
@@ -48,20 +56,69 @@ const ConvertCurrencyPage = () => {
 
     const getReceiveAmount = () => {
         const val = parseFloat(amount);
-        if (isNaN(val)) return 0;
+        if (isNaN(val)) return '0.00';
         return (val * exchangeRate).toFixed(2);
     };
 
-    const handleConvert = () => {
+    const handleConvert = async () => {
         if (!amount || parseFloat(amount) <= 0 || parseFloat(amount) > fromWallet.balance) return;
+        if (!fromWallet || !toWallet) return;
 
         setIsProcessing(true);
-        setTimeout(() => {
-            setIsProcessing(false);
-            setTransactionId(`CNV-${Math.floor(Math.random() * 1000000)}`);
+
+        try {
+            const result = await authService.convertCurrency(
+                fromWallet.id,
+                toWallet.id,
+                parseFloat(amount)
+            );
+
+            setConversionResult(result);
             setShowSuccessModal(true);
-        }, 2000);
+
+            // Refresh wallets
+            authService.getWallets(user.id).then(data => {
+                setWallets(data);
+                const updatedFrom = data.find(w => w.id === fromWallet.id);
+                const updatedTo = data.find(w => w.id === toWallet.id);
+                if (updatedFrom) setFromWallet(updatedFrom);
+                if (updatedTo) setToWallet(updatedTo);
+            });
+
+        } catch (err) {
+            alert(err.message);
+        } finally {
+            setIsProcessing(false);
+        }
     };
+
+    const handleCloseSuccess = () => {
+        setShowSuccessModal(false);
+        setAmount('');
+        navigate('/dashboard');
+    };
+
+    if (!fromWallet || wallets.length < 2) {
+        return (
+            <DashboardLayout>
+                <Container className="py-5 text-center">
+                    {wallets.length < 2 ? (
+                        <>
+                            <h4 className="text-muted mb-3">You need at least 2 wallets to convert currency</h4>
+                            <Button as={Link} to="/dashboard" variant="primary">Create another wallet</Button>
+                        </>
+                    ) : (
+                        <>
+                            <Spinner animation="border" />
+                            <p className="text-muted mt-2">Loading wallets...</p>
+                        </>
+                    )}
+                </Container>
+            </DashboardLayout>
+        );
+    }
+
+    const availableToWallets = wallets.filter(w => w.id !== fromWallet.id);
 
     return (
         <DashboardLayout>
@@ -94,10 +151,10 @@ const ConvertCurrencyPage = () => {
                                         <Form.Select
                                             className="border-0 bg-transparent shadow-none fw-bold fs-5 p-0 w-auto"
                                             value={fromWallet.id}
-                                            onChange={e => setFromWallet(WALLETS.find(w => w.id === parseInt(e.target.value)))}
+                                            onChange={e => setFromWallet(wallets.find(w => w.id === parseInt(e.target.value)))}
                                             style={{ cursor: 'pointer' }}
                                         >
-                                            {WALLETS.map(w => <option key={w.id} value={w.id}>{w.code}</option>)}
+                                            {wallets.map(w => <option key={w.id} value={w.id}>{w.flag} {w.currency}</option>)}
                                         </Form.Select>
                                         <div className="vr mx-2"></div>
                                         <NumericFormat
@@ -108,8 +165,9 @@ const ConvertCurrencyPage = () => {
                                             thousandSeparator={true}
                                         />
                                     </div>
-                                    <div className="text-end text-muted small mt-1">
-                                        {fromWallet.symbol}
+                                    <div className="d-flex justify-content-between mt-1">
+                                        <small className="text-muted">{fromWallet.symbol}</small>
+                                        {parseFloat(amount) > fromWallet.balance && <small className="text-danger">Insufficient funds</small>}
                                     </div>
 
                                     {/* Switch Button */}
@@ -124,30 +182,32 @@ const ConvertCurrencyPage = () => {
                                     {/* To */}
                                     <div className="d-flex justify-content-between align-items-center mb-2">
                                         <span className="small text-muted fw-bold text-uppercase">To</span>
-                                        <span className="small text-muted">Balance: {toWallet.symbol}{toWallet.balance.toLocaleString()}</span>
+                                        <span className="small text-muted">Balance: {toWallet?.symbol}{toWallet?.balance.toLocaleString()}</span>
                                     </div>
                                     <div className="d-flex gap-2 align-items-center">
                                         <Form.Select
                                             className="border-0 bg-transparent shadow-none fw-bold fs-5 p-0 w-auto"
-                                            value={toWallet.id}
-                                            onChange={e => setToWallet(WALLETS.find(w => w.id === parseInt(e.target.value)))}
+                                            value={toWallet?.id}
+                                            onChange={e => setToWallet(wallets.find(w => w.id === parseInt(e.target.value)))}
                                             style={{ cursor: 'pointer' }}
                                         >
-                                            {WALLETS.filter(w => w.id !== fromWallet.id).map(w => <option key={w.id} value={w.id}>{w.code}</option>)}
+                                            {availableToWallets.map(w => <option key={w.id} value={w.id}>{w.flag} {w.currency}</option>)}
                                         </Form.Select>
                                         <div className="vr mx-2"></div>
                                         <div className="flex-grow-1 text-end fw-bold fs-3 text-success">
-                                            {amount ? getReceiveAmount() : '0.00'}
+                                            {getReceiveAmount()}
                                         </div>
                                     </div>
                                     <div className="text-end text-muted small mt-1">
-                                        {toWallet.symbol}
+                                        {toWallet?.symbol}
                                     </div>
                                 </div>
 
                                 <div className="d-flex justify-content-between align-items-center mb-4 px-2">
                                     <span className="text-muted small fw-bold">Exchange Rate</span>
-                                    <span className="fw-mono small bg-info-subtle text-info px-2 py-1 rounded">1 {fromWallet.code} = {exchangeRate} {toWallet.code}</span>
+                                    <span className="fw-mono small bg-info-subtle text-info px-2 py-1 rounded">
+                                        1 {fromWallet.currency} = {exchangeRate.toFixed(4)} {toWallet?.currency}
+                                    </span>
                                 </div>
 
                                 <Button
@@ -156,7 +216,12 @@ const ConvertCurrencyPage = () => {
                                     onClick={handleConvert}
                                     disabled={!amount || parseFloat(amount) <= 0 || parseFloat(amount) > fromWallet.balance || isProcessing}
                                 >
-                                    {isProcessing ? 'Converting...' : 'Convert Now'}
+                                    {isProcessing ? (
+                                        <>
+                                            <Spinner size="sm" className="me-2" />
+                                            Converting...
+                                        </>
+                                    ) : 'Convert Now'}
                                 </Button>
 
                             </Card.Body>
@@ -172,20 +237,26 @@ const ConvertCurrencyPage = () => {
                         <FaCheckCircle size={80} />
                     </div>
                     <h3 className="fw-bold mb-2">Conversion Successful!</h3>
-                    <p className="text-muted mb-4">You have successfully converted <span className="fw-bold text-dark">{fromWallet.symbol}{parseFloat(amount || 0).toLocaleString()}</span> to <span className="fw-bold text-dark">{toWallet.symbol}{getReceiveAmount()}</span>.</p>
+                    <p className="text-muted mb-4">
+                        You have successfully converted <span className="fw-bold text-dark">{fromWallet.symbol}{conversionResult?.amountDebited?.toLocaleString()}</span> to <span className="fw-bold text-dark">{toWallet?.symbol}{conversionResult?.amountCredited?.toLocaleString()}</span>.
+                    </p>
 
                     <div className="bg-light p-3 rounded-3 mb-4 text-start">
                         <div className="d-flex justify-content-between mb-2">
-                            <span className="text-muted small">Transaction ID</span>
-                            <span className="fw-mono small text-dark">{transactionId}</span>
+                            <span className="text-muted small">Exchange Rate</span>
+                            <span className="small text-dark">1 {conversionResult?.fromCurrency} = {conversionResult?.exchangeRate?.toFixed(4)} {conversionResult?.toCurrency}</span>
                         </div>
                         <div className="d-flex justify-content-between mb-2">
-                            <span className="text-muted small">Rate</span>
-                            <span className="small text-dark">1 {fromWallet.code} = {exchangeRate} {toWallet.code}</span>
+                            <span className="text-muted small">{fromWallet.currency} Wallet Balance</span>
+                            <span className="small text-dark">{fromWallet.symbol}{conversionResult?.fromWalletBalance?.toLocaleString()}</span>
+                        </div>
+                        <div className="d-flex justify-content-between">
+                            <span className="text-muted small">{toWallet?.currency} Wallet Balance</span>
+                            <span className="small text-success fw-bold">{toWallet?.symbol}{conversionResult?.toWalletBalance?.toLocaleString()}</span>
                         </div>
                     </div>
 
-                    <Button variant="primary" className="w-100 btn-gradient" onClick={() => { setShowSuccessModal(false); navigate('/dashboard'); }}>
+                    <Button variant="primary" className="w-100 btn-gradient" onClick={handleCloseSuccess}>
                         Back to Dashboard
                     </Button>
                 </Modal.Body>

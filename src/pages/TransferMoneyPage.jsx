@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Card, Row, Col, Form, Button, Modal, InputGroup } from 'react-bootstrap';
+import { Container, Card, Row, Col, Form, Button, Modal, InputGroup, Spinner, Alert } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaCheckCircle, FaPaperPlane } from 'react-icons/fa';
+import { FaArrowLeft, FaCheckCircle, FaPaperPlane, FaUser, FaExclamationTriangle } from 'react-icons/fa';
 import { NumericFormat } from 'react-number-format';
 import DashboardLayout from '../components/DashboardLayout';
 import authService from '../services/authService';
@@ -14,9 +14,14 @@ const TransferMoneyPage = () => {
     const [recipientEmail, setRecipientEmail] = useState('');
     const [amount, setAmount] = useState('');
     const [note, setNote] = useState('');
+
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isCheckingRecipient, setIsCheckingRecipient] = useState(false);
+    const [recipientInfo, setRecipientInfo] = useState(null);
+    const [recipientError, setRecipientError] = useState('');
+
     const [showSuccessModal, setShowSuccessModal] = useState(false);
-    const [transactionId, setTransactionId] = useState('');
+    const [transferResult, setTransferResult] = useState(null);
 
     useEffect(() => {
         if (user) {
@@ -27,27 +32,106 @@ const TransferMoneyPage = () => {
         }
     }, [user]);
 
+    // Debounce recipient email check
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (recipientEmail && recipientEmail.includes('@') && sourceWallet) {
+                checkRecipient();
+            } else {
+                setRecipientInfo(null);
+                setRecipientError('');
+            }
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [recipientEmail, sourceWallet]);
+
+    const checkRecipient = async () => {
+        if (!recipientEmail || !sourceWallet) return;
+
+        // Don't allow sending to self
+        if (recipientEmail.toLowerCase() === user.email?.toLowerCase()) {
+            setRecipientError("You cannot send money to yourself");
+            setRecipientInfo(null);
+            return;
+        }
+
+        setIsCheckingRecipient(true);
+        setRecipientError('');
+
+        try {
+            const result = await authService.checkRecipient(recipientEmail, sourceWallet.currency);
+            if (result.exists) {
+                setRecipientInfo(result);
+                setRecipientError('');
+            } else {
+                setRecipientInfo(null);
+                setRecipientError(result.message || 'User not found');
+            }
+        } catch (err) {
+            setRecipientError('Failed to check recipient');
+            setRecipientInfo(null);
+        } finally {
+            setIsCheckingRecipient(false);
+        }
+    };
+
     const handleMaxAmount = () => {
         if (sourceWallet) setAmount(sourceWallet.balance);
     };
 
-    const handleTransfer = () => {
-        if (!amount || parseFloat(amount) <= 0 || (sourceWallet && parseFloat(amount) > sourceWallet.balance) || !recipientEmail) return;
+    const getConvertedAmount = () => {
+        if (!recipientInfo || !amount) return 0;
+        const amountNum = parseFloat(amount);
+        if (isNaN(amountNum)) return 0;
+        return (amountNum * recipientInfo.exchangeRate).toFixed(2);
+    };
+
+    const handleTransfer = async () => {
+        if (!amount || parseFloat(amount) <= 0 || !sourceWallet || !recipientInfo) return;
+        if (parseFloat(amount) > sourceWallet.balance) return;
 
         setIsProcessing(true);
-        // Simulate transfer
-        setTimeout(() => {
-            setIsProcessing(false);
-            setTransactionId(`TRX-${Math.floor(Math.random() * 1000000)}`);
+
+        try {
+            const result = await authService.sendMoney(
+                sourceWallet.id,
+                recipientEmail,
+                parseFloat(amount),
+                note
+            );
+
+            setTransferResult(result);
             setShowSuccessModal(true);
-        }, 2000);
+
+            // Refresh wallets
+            authService.getWallets(user.id).then(data => {
+                setWallets(data);
+                const updated = data.find(w => w.id === sourceWallet.id);
+                if (updated) setSourceWallet(updated);
+            });
+
+        } catch (err) {
+            alert(err.message);
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    const handleCloseSuccess = () => {
+        setShowSuccessModal(false);
+        setRecipientEmail('');
+        setAmount('');
+        setNote('');
+        setRecipientInfo(null);
+        navigate('/dashboard');
     };
 
     if (!sourceWallet) {
         return (
             <DashboardLayout>
                 <Container className="py-5 text-center">
-                    <p className="text-muted">Loading wallets...</p>
+                    <Spinner animation="border" />
+                    <p className="text-muted mt-2">Loading wallets...</p>
                 </Container>
             </DashboardLayout>
         );
@@ -82,7 +166,11 @@ const TransferMoneyPage = () => {
                                             size="lg"
                                             className="shadow-none border-light bg-light fw-bold"
                                             value={sourceWallet.id}
-                                            onChange={e => setSourceWallet(wallets.find(w => w.id === parseInt(e.target.value)))}
+                                            onChange={e => {
+                                                const selected = wallets.find(w => w.id === parseInt(e.target.value));
+                                                setSourceWallet(selected);
+                                                setRecipientInfo(null);
+                                            }}
                                         >
                                             {wallets.map(w => (
                                                 <option key={w.id} value={w.id}>
@@ -95,15 +183,42 @@ const TransferMoneyPage = () => {
                                     {/* Recipient Email */}
                                     <Form.Group className="mb-4">
                                         <Form.Label className="fw-semibold text-muted small text-uppercase">Recipient Email</Form.Label>
-                                        <Form.Control
-                                            size="lg"
-                                            type="email"
-                                            placeholder="Enter recipient's email"
-                                            className="bg-light border-0 shadow-none"
-                                            value={recipientEmail}
-                                            onChange={e => setRecipientEmail(e.target.value)}
-                                        />
-                                        <Form.Text className="text-muted">The recipient must have an account on our platform.</Form.Text>
+                                        <InputGroup>
+                                            <Form.Control
+                                                size="lg"
+                                                type="email"
+                                                placeholder="Enter recipient's email"
+                                                className="bg-light border-0 shadow-none"
+                                                value={recipientEmail}
+                                                onChange={e => setRecipientEmail(e.target.value)}
+                                            />
+                                            {isCheckingRecipient && (
+                                                <InputGroup.Text className="bg-light border-0">
+                                                    <Spinner size="sm" />
+                                                </InputGroup.Text>
+                                            )}
+                                        </InputGroup>
+
+                                        {recipientError && (
+                                            <Alert variant="danger" className="mt-2 py-2 mb-0 small d-flex align-items-center gap-2">
+                                                <FaExclamationTriangle /> {recipientError}
+                                            </Alert>
+                                        )}
+
+                                        {recipientInfo && (
+                                            <div className="mt-2 p-3 bg-success-subtle rounded-3 border border-success border-opacity-25">
+                                                <div className="d-flex align-items-center gap-2 text-success">
+                                                    <FaUser />
+                                                    <span className="fw-bold">{recipientInfo.recipientName}</span>
+                                                </div>
+                                                <small className="text-muted">
+                                                    Will receive in {recipientInfo.recipientCurrency} wallet
+                                                    {sourceWallet.currency !== recipientInfo.recipientCurrency && (
+                                                        <span> (Rate: 1 {sourceWallet.currency} = {recipientInfo.exchangeRate.toFixed(4)} {recipientInfo.recipientCurrency})</span>
+                                                    )}
+                                                </small>
+                                            </div>
+                                        )}
                                     </Form.Group>
 
                                     {/* Amount */}
@@ -124,6 +239,15 @@ const TransferMoneyPage = () => {
                                             <small className="text-muted">Available: {sourceWallet.symbol}{sourceWallet.balance.toLocaleString()}</small>
                                             {parseFloat(amount) > sourceWallet.balance && <small className="text-danger fw-bold">Insufficient funds</small>}
                                         </div>
+
+                                        {/* Converted Amount Preview */}
+                                        {recipientInfo && sourceWallet.currency !== recipientInfo.recipientCurrency && amount && parseFloat(amount) > 0 && (
+                                            <div className="mt-2 p-2 bg-info-subtle rounded text-center">
+                                                <small className="text-info-emphasis">
+                                                    Recipient will receive approximately <strong>{recipientInfo.recipientSymbol}{getConvertedAmount()}</strong>
+                                                </small>
+                                            </div>
+                                        )}
                                     </Form.Group>
 
                                     {/* Note */}
@@ -145,9 +269,20 @@ const TransferMoneyPage = () => {
                                             size="lg"
                                             className="btn-gradient fw-bold py-3"
                                             onClick={handleTransfer}
-                                            disabled={!amount || parseFloat(amount) <= 0 || parseFloat(amount) > sourceWallet.balance || !recipientEmail || isProcessing}
+                                            disabled={
+                                                !amount ||
+                                                parseFloat(amount) <= 0 ||
+                                                parseFloat(amount) > sourceWallet.balance ||
+                                                !recipientInfo ||
+                                                isProcessing
+                                            }
                                         >
-                                            {isProcessing ? 'Processing Transfer...' : 'Send Money'}
+                                            {isProcessing ? (
+                                                <>
+                                                    <Spinner size="sm" className="me-2" />
+                                                    Processing Transfer...
+                                                </>
+                                            ) : 'Send Money'}
                                         </Button>
                                         <Button variant="light" className="text-muted" as={Link} to="/dashboard">Cancel</Button>
                                     </div>
@@ -166,24 +301,30 @@ const TransferMoneyPage = () => {
                         <FaCheckCircle size={80} />
                     </div>
                     <h3 className="fw-bold mb-2">Transfer Successful!</h3>
-                    <p className="text-muted mb-4">You have successfully sent <span className="fw-bold text-dark">{sourceWallet.symbol}{parseFloat(amount || 0).toLocaleString()}</span> to <span className="fw-bold text-dark">{recipientEmail}</span>.</p>
+                    <p className="text-muted mb-4">
+                        You have successfully sent <span className="fw-bold text-dark">{sourceWallet.symbol}{parseFloat(amount || 0).toLocaleString()}</span> to <span className="fw-bold text-dark">{transferResult?.recipientName}</span>.
+                    </p>
 
                     <div className="bg-light p-3 rounded-3 mb-4 text-start">
                         <div className="d-flex justify-content-between mb-2">
                             <span className="text-muted small">Transaction ID</span>
-                            <span className="fw-mono small text-dark">{transactionId}</span>
+                            <span className="fw-mono small text-dark">TRX-{transferResult?.transactionId}</span>
                         </div>
                         <div className="d-flex justify-content-between mb-2">
                             <span className="text-muted small">Date</span>
                             <span className="small text-dark">{new Date().toLocaleString()}</span>
                         </div>
-                        <div className="d-flex justify-content-between">
+                        <div className="d-flex justify-content-between mb-2">
                             <span className="text-muted small">Amount Sent</span>
-                            <span className="fw-bold text-success">{sourceWallet.symbol}{parseFloat(amount || 0).toLocaleString()}</span>
+                            <span className="fw-bold text-danger">-{sourceWallet.symbol}{transferResult?.amountSent?.toLocaleString()}</span>
+                        </div>
+                        <div className="d-flex justify-content-between">
+                            <span className="text-muted small">Recipient Received</span>
+                            <span className="fw-bold text-success">{recipientInfo?.recipientSymbol}{transferResult?.amountReceived?.toLocaleString()}</span>
                         </div>
                     </div>
 
-                    <Button variant="primary" className="w-100 btn-gradient" onClick={() => { setShowSuccessModal(false); navigate('/dashboard'); }}>
+                    <Button variant="primary" className="w-100 btn-gradient" onClick={handleCloseSuccess}>
                         Back to Dashboard
                     </Button>
                 </Modal.Body>
