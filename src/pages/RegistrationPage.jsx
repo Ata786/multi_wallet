@@ -31,17 +31,17 @@ const RegistrationPage = () => {
     };
 
     return (
-        <div className="d-flex align-items-center min-vh-100 bg-light py-5">
-            <Container>
-                <Card className="shadow-lg border-0 overflow-hidden mx-auto" style={{ borderRadius: '20px', maxWidth: '1000px' }}>
+        <div className="d-flex align-items-center min-vh-100 bg-light py-3 py-md-5">
+            <Container className="px-3 px-md-4">
+                <Card className="shadow-lg border-0 overflow-hidden mx-auto login-card" style={{ borderRadius: '20px', maxWidth: '1000px' }}>
                     <Row className="g-0">
                         <Col md={6} className="d-none d-md-flex bg-primary align-items-center justify-content-center p-0">
                             <img src={registrationImg} alt="Register" className="img-fluid w-100 h-100" style={{ objectFit: 'cover' }} />
                         </Col>
-                        <Col md={6} className="p-5 bg-white">
-                            <div className="text-center mb-4">
-                                <h2 className="fw-bold text-primary-custom">Create Your Account</h2>
-                                <p className="text-muted">Start managing your multi-currency wallet</p>
+                        <Col md={6} className="p-3 p-sm-4 p-md-5 bg-white">
+                            <div className="text-center mb-3 mb-md-4">
+                                <h2 className="fw-bold text-primary-custom fs-4 fs-md-2">Create Your Account</h2>
+                                <p className="text-muted small mb-0">Start managing your multi-currency wallet</p>
                             </div>
                             <Form onSubmit={handleSubmit(onSubmit)}>
                                 <Form.Group className="mb-3">

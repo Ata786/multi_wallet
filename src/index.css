@@ -48,3 +48,323 @@ body {
   border-color: var(--primary-blue);
   box-shadow: 0 0 0 0.25rem rgba(37, 99, 235, 0.25);
 }
+
+/* Mobile Responsive Styles for Login Page */
+.login-card {
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Extra small devices (phones, less than 576px) */
+@media (max-width: 575.98px) {
+  .login-card {
+    border-radius: 15px !important;
+    margin: 0 10px;
+  }
+
+  .login-card .p-3 {
+    padding: 1.25rem !important;
+  }
+
+  .form-control,
+  .input-group-text {
+    font-size: 14px;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .btn-gradient {
+    padding: 0.625rem 1rem !important;
+    font-size: 14px;
+  }
+
+  .fs-4 {
+    font-size: 1.25rem !important;
+  }
+}
+
+/* Small devices (landscape phones, 576px and up) */
+@media (min-width: 576px) and (max-width: 767.98px) {
+  .login-card {
+    max-width: 500px !important;
+    margin: 0 auto;
+  }
+}
+
+/* Medium devices (tablets, 768px and up) */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .login-card {
+    max-width: 900px !important;
+  }
+}
+
+/* Ensure input groups look good on all screens */
+.input-group {
+  flex-wrap: nowrap;
+}
+
+.input-group .form-control {
+  min-width: 0;
+}
+
+/* Improve touch targets on mobile */
+@media (max-width: 767.98px) {
+  .form-check-input {
+    width: 1.25em;
+    height: 1.25em;
+  }
+
+  .form-check-label {
+    padding-left: 0.25rem;
+  }
+
+  .btn {
+    min-height: 44px;
+  }
+}
+
+/* ==========================================
+   Landing Page Responsive Styles
+   ========================================== */
+
+/* Landing page title responsive */
+.landing-title {
+  line-height: 1.2;
+}
+
+.landing-subtitle {
+  line-height: 1.5;
+}
+
+/* Extra small devices (phones, less than 576px) */
+@media (max-width: 575.98px) {
+  .landing-title {
+    font-size: 1.75rem !important;
+  }
+
+  .landing-subtitle {
+    font-size: 0.95rem !important;
+  }
+
+  .landing-btn {
+    font-size: 0.9rem !important;
+    padding: 0.625rem 1.5rem !important;
+    width: 100%;
+  }
+
+  .glass-card .p-4 {
+    padding: 1rem !important;
+  }
+
+  .glass-card h5 {
+    font-size: 1rem;
+  }
+
+  .glass-card .fs-1 {
+    font-size: 1.5rem !important;
+  }
+}
+
+/* Small devices (landscape phones, 576px and up) */
+@media (min-width: 576px) and (max-width: 767.98px) {
+  .landing-title {
+    font-size: 2rem !important;
+  }
+
+  .landing-subtitle {
+    font-size: 1rem !important;
+  }
+
+  .landing-btn {
+    font-size: 1rem !important;
+  }
+}
+
+/* Medium devices (tablets, 768px and up) */
+@media (min-width: 768px) {
+  .landing-title {
+    font-size: 2.5rem !important;
+  }
+
+  .landing-subtitle {
+    font-size: 1.1rem !important;
+  }
+}
+
+/* Large devices (desktops, 992px and up) */
+@media (min-width: 992px) {
+  .landing-title {
+    font-size: 3rem !important;
+  }
+
+  .landing-subtitle {
+    font-size: 1.25rem !important;
+  }
+}
+
+/* ==========================================
+   Notifications Dropdown Responsive Styles
+   ========================================== */
+
+.notifications-dropdown-menu {
+  width: 360px;
+}
+
+/* Mobile notifications dropdown */
+@media (max-width: 575.98px) {
+  .notifications-dropdown-menu {
+    width: calc(100vw - 20px) !important;
+    max-width: 360px;
+    right: -10px !important;
+    left: auto !important;
+    transform: none !important;
+  }
+
+  .notifications-dropdown-menu .p-3 {
+    padding: 0.75rem !important;
+  }
+
+  .notifications-dropdown-menu h6 {
+    font-size: 0.9rem;
+  }
+
+  .notifications-dropdown-menu .small {
+    font-size: 0.8rem;
+  }
+}
+
+/* Small devices (landscape phones, 576px and up) */
+@media (min-width: 576px) and (max-width: 767.98px) {
+  .notifications-dropdown-menu {
+    width: 320px;
+  }
+}
+
+/* ==========================================
+   General Mobile Enhancements
+   ========================================== */
+
+/* Prevent horizontal scroll on mobile */
+html,
+body {
+  overflow-x: hidden;
+}
+
+/* Better scrolling on mobile */
+@media (max-width: 767.98px) {
+
+  .container,
+  .container-fluid {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  /* Navbar adjustments */
+  .navbar {
+    padding: 0.5rem 0;
+  }
+
+  .navbar-brand {
+    font-size: 1.1rem;
+  }
+
+  /* Navbar collapsed styling */
+  .navbar-collapse {
+    background: rgba(255, 255, 255, 0.98);
+    border-radius: 10px;
+    margin-top: 0.5rem;
+    padding: 1rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  .bg-transparent .navbar-collapse {
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+  }
+
+  .navbar-collapse .nav {
+    gap: 0.5rem !important;
+  }
+
+  .navbar-collapse .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ==========================================
+   Notifications Modal Styles (Mobile)
+   ========================================== */
+
+.notifications-modal .modal-dialog {
+  margin: 1rem auto;
+  max-width: 90%;
+  width: 100%;
+}
+
+@media (min-width: 400px) {
+  .notifications-modal .modal-dialog {
+    max-width: 380px;
+  }
+}
+
+.notifications-modal .modal-content {
+  border-radius: 20px;
+  border: none;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+.notifications-modal .modal-header {
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  color: white;
+  border: none;
+}
+
+.notifications-modal .modal-header .modal-title {
+  color: white;
+  display: flex;
+  align-items: center;
+}
+
+.notifications-modal .modal-header .btn-close {
+  filter: brightness(0) invert(1);
+  opacity: 0.8;
+}
+
+.notifications-modal .modal-header .btn-close:hover {
+  opacity: 1;
+}
+
+.notifications-modal .modal-body {
+  padding: 0;
+  background: #fff;
+}
+
+.notifications-modal .modal-footer {
+  border-radius: 0 0 20px 20px;
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+}
+
+.notifications-modal .modal-body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.notifications-modal .modal-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.notifications-modal .modal-body::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.notifications-modal .modal-body::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+/* Modal backdrop */
+.notifications-modal+.modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.5);
+}

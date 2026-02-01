@@ -1,13 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { Dropdown, Badge, Spinner } from 'react-bootstrap';
-import { FaBell, FaArrowDown, FaArrowUp, FaExchangeAlt, FaCheck, FaCheckDouble } from 'react-icons/fa';
+import { Dropdown, Badge, Spinner, Modal } from 'react-bootstrap';
+import { FaBell, FaArrowDown, FaArrowUp, FaExchangeAlt, FaCheck, FaCheckDouble, FaTimes } from 'react-icons/fa';
 import authService from '../services/authService';
+
+// Custom hook to detect window size
+const useWindowSize = () => {
+    const [windowSize, setWindowSize] = useState({
+        width: typeof window !== 'undefined' ? window.innerWidth : 0,
+    });
+
+    useEffect(() => {
+        const handleResize = () => {
+            setWindowSize({ width: window.innerWidth });
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    return windowSize;
+};
 
 const NotificationsPanel = ({ userId }) => {
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [loading, setLoading] = useState(true);
     const [show, setShow] = useState(false);
+    const { width } = useWindowSize();
+    const isMobile = width < 768;
 
     useEffect(() => {
         if (userId) {
@@ -95,6 +115,118 @@ const NotificationsPanel = ({ userId }) => {
         return date.toLocaleDateString();
     };
 
+    const handleOpen = () => {
+        setShow(true);
+        loadNotifications();
+    };
+
+    const handleClose = () => {
+        setShow(false);
+    };
+
+    // Notification content component (shared between modal and dropdown)
+    const NotificationContent = () => (
+        <>
+            {loading ? (
+                <div className="text-center py-4">
+                    <Spinner size="sm" />
+                </div>
+            ) : notifications.length === 0 ? (
+                <div className="text-center py-5 text-muted">
+                    <FaBell size={32} className="mb-2 opacity-50" />
+                    <p className="mb-0 small">No notifications yet</p>
+                </div>
+            ) : (
+                notifications.map(notif => (
+                    <div
+                        key={notif.id}
+                        className={`p-3 border-bottom d-flex gap-3 ${!notif.read ? 'bg-primary bg-opacity-10' : ''}`}
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => !notif.read && handleMarkRead(notif.id)}
+                    >
+                        <div className="rounded-circle bg-light p-2 d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px', minWidth: '40px' }}>
+                            {getIcon(notif.type)}
+                        </div>
+                        <div className="flex-grow-1">
+                            <div className="d-flex justify-content-between align-items-start">
+                                <h6 className="fw-semibold mb-1 small">{notif.title}</h6>
+                                {!notif.read && (
+                                    <span className="bg-primary rounded-circle" style={{ width: '8px', height: '8px', minWidth: '8px' }}></span>
+                                )}
+                            </div>
+                            <p className="text-muted small mb-1">{notif.message}</p>
+                            <small className="text-muted">{formatTime(notif.createdAt)}</small>
+                        </div>
+                    </div>
+                ))
+            )}
+        </>
+    );
+
+    // Bell button component
+    const BellButton = ({ onClick }) => (
+        <button
+            className="btn position-relative border-0 bg-transparent p-2"
+            onClick={onClick}
+            aria-label="Notifications"
+        >
+            <FaBell size={20} className="text-muted" />
+            {unreadCount > 0 && (
+                <Badge
+                    bg="danger"
+                    pill
+                    className="position-absolute top-0 start-100 translate-middle"
+                    style={{ fontSize: '0.65rem' }}
+                >
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                </Badge>
+            )}
+        </button>
+    );
+
+    // Mobile: Show Modal
+    if (isMobile) {
+        return (
+            <>
+                <BellButton onClick={handleOpen} />
+                <Modal
+                    show={show}
+                    onHide={handleClose}
+                    centered
+                    className="notifications-modal"
+                    backdrop="static"
+                    keyboard={false}
+                >
+                    <Modal.Header closeButton className="bg-white border-bottom">
+                        <Modal.Title className="fw-bold fs-5">
+                            <FaBell className="me-2 text-primary" />
+                            Notifications
+                        </Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body className="p-0" style={{ maxHeight: '50vh', overflowY: 'auto' }}>
+                        {unreadCount > 0 && (
+                            <div className="p-2 bg-light border-bottom d-flex justify-content-end">
+                                <button
+                                    className="btn btn-link btn-sm text-primary text-decoration-none p-0 d-flex align-items-center gap-1"
+                                    onClick={handleMarkAllRead}
+                                >
+                                    <FaCheckDouble size={12} /> Mark all as read
+                                </button>
+                            </div>
+                        )}
+                        <NotificationContent />
+                    </Modal.Body>
+                    <Modal.Footer className="justify-content-center py-3 bg-light border-top">
+                        <a href="/transactions" className="text-primary text-decoration-none fw-semibold" onClick={handleClose}>
+                            View All Transactions
+                        </a>
+                    </Modal.Footer>
+                </Modal>
+            </>
+        );
+    }
+
+    // Desktop: Show Dropdown
     return (
         <Dropdown align="end" show={show} onToggle={(isOpen) => {
             setShow(isOpen);
@@ -119,8 +251,8 @@ const NotificationsPanel = ({ userId }) => {
             </Dropdown.Toggle>
 
             <Dropdown.Menu
-                className="shadow-lg border-0 py-0"
-                style={{ width: '360px', maxHeight: '450px', overflowY: 'auto' }}
+                className="shadow-lg border-0 py-0 notifications-dropdown-menu"
+                style={{ maxHeight: '80vh', overflowY: 'auto' }}
             >
                 <div className="p-3 border-bottom d-flex justify-content-between align-items-center sticky-top bg-white">
                     <h6 className="fw-bold mb-0">Notifications</h6>

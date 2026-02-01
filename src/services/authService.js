@@ -1,5 +1,6 @@
-const API_URL = "https://joyful-cooperation-production.up.railway.app:8080/api/auth";
-const WALLET_API_URL = "https://joyful-cooperation-production.up.railway.app:8080/api/wallets";
+const BASE_URL = "https://joyful-cooperation-production.up.railway.app/api";
+const API_URL = "https://joyful-cooperation-production.up.railway.app/api/auth";
+const WALLET_API_URL = "https://joyful-cooperation-production.up.railway.app/api/wallets";
 
 const register = (name, email, password, phone, country) => {
     return fetch(API_URL + "/signup", {
@@ -78,22 +79,22 @@ const createWallet = (userId, currency, initialDeposit) => {
 };
 
 const getTransactions = (walletId) => {
-    return fetch(`http://localhost:8080/api/transactions/wallet/${walletId}`)
+    return fetch(`${BASE_URL}/transactions/wallet/${walletId}`)
         .then(res => res.json());
 };
 
 const getWalletStats = (walletId) => {
-    return fetch(`http://localhost:8080/api/transactions/wallet/${walletId}/stats`)
+    return fetch(`${BASE_URL}/transactions/wallet/${walletId}/stats`)
         .then(res => res.json());
 };
 
 const getUserTransactions = (userId) => {
-    return fetch(`http://localhost:8080/api/transactions/user/${userId}`)
+    return fetch(`${BASE_URL}/transactions/user/${userId}`)
         .then(res => res.json());
 };
 
 const createPaymentIntent = (amount, currency) => {
-    return fetch(`http://localhost:8080/api/payments/create-intent`, {
+    return fetch(`${BASE_URL}/payments/create-intent`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount, currency })
@@ -101,7 +102,7 @@ const createPaymentIntent = (amount, currency) => {
 };
 
 const confirmPayment = (paymentIntentId, walletId) => {
-    return fetch(`http://localhost:8080/api/payments/confirm`, {
+    return fetch(`${BASE_URL}/payments/confirm`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ paymentIntentId, walletId })
@@ -113,12 +114,12 @@ const confirmPayment = (paymentIntentId, walletId) => {
 
 // Transfer APIs
 const checkRecipient = (email, senderCurrency) => {
-    return fetch(`http://localhost:8080/api/transfer/check-recipient?email=${encodeURIComponent(email)}&senderCurrency=${senderCurrency}`)
+    return fetch(`${BASE_URL}/transfer/check-recipient?email=${encodeURIComponent(email)}&senderCurrency=${senderCurrency}`)
         .then(res => res.json());
 };
 
 const sendMoney = (senderWalletId, recipientEmail, amount, note) => {
-    return fetch(`http://localhost:8080/api/transfer/send`, {
+    return fetch(`${BASE_URL}/transfer/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ senderWalletId, recipientEmail, amount, note })
@@ -130,7 +131,7 @@ const sendMoney = (senderWalletId, recipientEmail, amount, note) => {
 };
 
 const convertCurrency = (fromWalletId, toWalletId, amount) => {
-    return fetch(`http://localhost:8080/api/transfer/convert`, {
+    return fetch(`${BASE_URL}/transfer/convert`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fromWalletId, toWalletId, amount })
@@ -142,23 +143,23 @@ const convertCurrency = (fromWalletId, toWalletId, amount) => {
 };
 
 const getExchangeRates = () => {
-    return fetch(`http://localhost:8080/api/transfer/exchange-rates`)
+    return fetch(`${BASE_URL}/transfer/exchange-rates`)
         .then(res => res.json());
 };
 
 const getExchangeRate = (from, to) => {
-    return fetch(`http://localhost:8080/api/transfer/exchange-rate?from=${from}&to=${to}`)
+    return fetch(`${BASE_URL}/transfer/exchange-rate?from=${from}&to=${to}`)
         .then(res => res.json());
 };
 
 // Profile APIs
 const getProfile = (userId) => {
-    return fetch(`http://localhost:8080/api/user/${userId}`)
+    return fetch(`${BASE_URL}/user/${userId}`)
         .then(res => res.json());
 };
 
 const updateProfile = (userId, data) => {
-    return fetch(`http://localhost:8080/api/user/${userId}/profile`, {
+    return fetch(`${BASE_URL}/user/${userId}/profile`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -175,7 +176,7 @@ const updateProfile = (userId, data) => {
 };
 
 const changePassword = (userId, currentPassword, newPassword) => {
-    return fetch(`http://localhost:8080/api/user/${userId}/change-password`, {
+    return fetch(`${BASE_URL}/user/${userId}/change-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ currentPassword, newPassword })
@@ -188,40 +189,40 @@ const changePassword = (userId, currentPassword, newPassword) => {
 
 // Notification APIs
 const getNotifications = (userId) => {
-    return fetch(`http://localhost:8080/api/user/${userId}/notifications`)
+    return fetch(`${BASE_URL}/user/${userId}/notifications`)
         .then(res => res.json());
 };
 
 const getUnreadNotifications = (userId) => {
-    return fetch(`http://localhost:8080/api/user/${userId}/notifications/unread`)
+    return fetch(`${BASE_URL}/user/${userId}/notifications/unread`)
         .then(res => res.json());
 };
 
 const getUnreadNotificationCount = (userId) => {
-    return fetch(`http://localhost:8080/api/user/${userId}/notifications/count`)
+    return fetch(`${BASE_URL}/user/${userId}/notifications/count`)
         .then(res => res.json());
 };
 
 const markNotificationRead = (notificationId) => {
-    return fetch(`http://localhost:8080/api/user/notifications/${notificationId}/read`, {
+    return fetch(`${BASE_URL}/user/notifications/${notificationId}/read`, {
         method: 'POST'
     }).then(res => res.json());
 };
 
 const markAllNotificationsRead = (userId) => {
-    return fetch(`http://localhost:8080/api/user/${userId}/notifications/read-all`, {
+    return fetch(`${BASE_URL}/user/${userId}/notifications/read-all`, {
         method: 'POST'
     }).then(res => res.json());
 };
 
 // Reports APIs
 const getReportSummary = (userId) => {
-    return fetch(`http://localhost:8080/api/reports/user/${userId}/summary`)
+    return fetch(`${BASE_URL}/reports/user/${userId}/summary`)
         .then(res => res.json());
 };
 
 const getMonthlyReport = (userId, year, month) => {
-    let url = `http://localhost:8080/api/reports/user/${userId}/monthly`;
+    let url = `${BASE_URL}/reports/user/${userId}/monthly`;
     if (year && month) {
         url += `?year=${year}&month=${month}`;
     }
@@ -229,7 +230,7 @@ const getMonthlyReport = (userId, year, month) => {
 };
 
 const exportTransactions = (userId, startDate, endDate) => {
-    let url = `http://localhost:8080/api/reports/user/${userId}/transactions/export`;
+    let url = `${BASE_URL}/reports/user/${userId}/transactions/export`;
     const params = [];
     if (startDate) params.push(`startDate=${startDate}`);
     if (endDate) params.push(`endDate=${endDate}`);

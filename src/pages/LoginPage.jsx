@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Container, Row, Col, Card, Form, Button, Spinner, Alert } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaGoogle } from 'react-icons/fa';
+import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import loginImg from '../assets/login.png';
 import authService from '../services/authService';
 
@@ -29,9 +29,9 @@ const LoginPage = () => {
     };
 
     return (
-        <div className="d-flex align-items-center min-vh-100 bg-light py-5">
-            <Container>
-                <Card className="shadow-lg border-0 overflow-hidden mx-auto" style={{ borderRadius: '20px', maxWidth: '1000px' }}>
+        <div className="d-flex align-items-center min-vh-100 bg-light py-3 py-md-5">
+            <Container className="px-3 px-md-4">
+                <Card className="shadow-lg border-0 overflow-hidden mx-auto login-card" style={{ borderRadius: '20px', maxWidth: '1000px' }}>
                     <Row className="g-0">
                         <Col md={6} className="d-none d-md-flex bg-dark align-items-center justify-content-center p-0 position-relative">
                             <div className="position-absolute w-100 h-100 bg-gradient-landing opacity-75" style={{ zIndex: 1 }}></div>
@@ -41,10 +41,10 @@ const LoginPage = () => {
                                 <p>Secure. Fast. Reliable.</p>
                             </div>
                         </Col>
-                        <Col md={6} className="p-5 bg-white">
-                            <div className="text-center mb-4">
-                                <h3 className="fw-bold text-primary-custom">Welcome Back</h3>
-                                <p className="text-muted">Login to manage your wallets</p>
+                        <Col md={6} className="p-3 p-sm-4 p-md-5 bg-white">
+                            <div className="text-center mb-3 mb-md-4">
+                                <h3 className="fw-bold text-primary-custom fs-4 fs-md-3">Welcome Back</h3>
+                                <p className="text-muted small mb-0">Login to manage your wallets</p>
                             </div>
 
                             {error && <Alert variant="danger" className="py-2 text-center small">{error}</Alert>}
@@ -83,24 +83,13 @@ const LoginPage = () => {
                                     </div>
                                 </Form.Group>
 
-                                <div className="d-flex justify-content-between align-items-center mb-4">
+                                <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-3 mb-md-4">
                                     <Form.Check type="checkbox" label="Remember me" className="small text-muted" />
                                     <Link to="/forgot-password" className="small text-decoration-none text-primary-custom fw-bold">Forgot Password?</Link>
                                 </div>
 
                                 <Button type="submit" className="w-100 btn-gradient py-2 fw-bold text-uppercase mb-3" disabled={isLoading}>
                                     {isLoading ? <Spinner animation="border" size="sm" /> : 'Login'}
-                                </Button>
-
-                                <div className="d-flex align-items-center mb-3">
-                                    <hr className="flex-grow-1" />
-                                    <span className="px-3 text-muted small">OR</span>
-                                    <hr className="flex-grow-1" />
-                                </div>
-
-                                <Button variant="light" className="w-100 border py-2 d-flex align-items-center justify-content-center gap-2 mb-4">
-                                    <FaGoogle className="text-danger" />
-                                    <span className="fw-semibold text-muted">Sign up with Google</span>
                                 </Button>
 
                                 <div className="text-center">
