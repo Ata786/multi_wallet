@@ -83,9 +83,8 @@ const LoginPage = () => {
                                     </div>
                                 </Form.Group>
 
-                                <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-3 mb-md-4">
+                                <div className="mb-3 mb-md-4">
                                     <Form.Check type="checkbox" label="Remember me" className="small text-muted" />
-                                    <Link to="/forgot-password" className="small text-decoration-none text-primary-custom fw-bold">Forgot Password?</Link>
                                 </div>
 
                                 <Button type="submit" className="w-100 btn-gradient py-2 fw-bold text-uppercase mb-3" disabled={isLoading}>

@@ -3,31 +3,25 @@ import { Dropdown, Badge, Spinner, Modal } from 'react-bootstrap';
 import { FaBell, FaArrowDown, FaArrowUp, FaExchangeAlt, FaCheck, FaCheckDouble, FaTimes } from 'react-icons/fa';
 import authService from '../services/authService';
 
-// Custom hook to detect window size
-const useWindowSize = () => {
-    const [windowSize, setWindowSize] = useState({
-        width: typeof window !== 'undefined' ? window.innerWidth : 0,
-    });
-
-    useEffect(() => {
-        const handleResize = () => {
-            setWindowSize({ width: window.innerWidth });
-        };
-
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    return windowSize;
-};
-
 const NotificationsPanel = ({ userId }) => {
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [loading, setLoading] = useState(true);
     const [show, setShow] = useState(false);
-    const { width } = useWindowSize();
-    const isMobile = width < 768;
+    const [isMobile, setIsMobile] = useState(false);
+
+    // Detect mobile on mount and window resize
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+
+        // Check immediately on mount
+        checkMobile();
+
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     useEffect(() => {
         if (userId) {

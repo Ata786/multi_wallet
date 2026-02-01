@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Dropdown, Badge, Button, Spinner } from 'react-bootstrap';
-import { FaBell, FaCheckCircle, FaArrowDown, FaArrowUp, FaExchangeAlt, FaCheckDouble } from 'react-icons/fa';
+import { Dropdown, Badge, Button, Spinner, Modal } from 'react-bootstrap';
+import { FaBell, FaCheckCircle, FaArrowDown, FaArrowUp, FaExchangeAlt, FaCheckDouble, FaTimes } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import authService from '../services/authService';
 
@@ -10,6 +10,17 @@ const NotificationDropdown = () => {
     const [unreadCount, setUnreadCount] = useState(0);
     const [loading, setLoading] = useState(false);
     const [show, setShow] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
+
+    // Detect mobile on mount and window resize
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     const loadNotifications = useCallback(async () => {
         if (!user) return;
@@ -111,22 +122,130 @@ const NotificationDropdown = () => {
         return date.toLocaleDateString();
     };
 
-    const handleToggle = (isOpen) => {
-        setShow(isOpen);
-        if (isOpen) {
-            loadNotifications();
-        }
+    const handleOpen = () => {
+        setShow(true);
+        loadNotifications();
     };
 
-    return (
-        <Dropdown align="end" className="notification-dropdown" show={show} onToggle={handleToggle}>
-            <Dropdown.Toggle variant="link" className="p-0 text-decoration-none text-dark position-relative no-caret" id="dropdown-notif">
-                <motion.div
-                    animate={unreadCount > 0 ? { rotate: [0, -10, 10, -10, 10, 0] } : {}}
-                    transition={{ repeat: Infinity, repeatDelay: 5, duration: 0.5 }}
+    const handleClose = () => {
+        setShow(false);
+    };
+
+    // Shared notification list component
+    const NotificationList = () => (
+        <>
+            {loading ? (
+                <div className="p-4 text-center">
+                    <Spinner size="sm" />
+                </div>
+            ) : notifications.length === 0 ? (
+                <div className="p-5 text-center text-muted">
+                    <FaBell size={32} className="mb-2 opacity-50" />
+                    <p className="mb-0 small">No notifications yet</p>
+                </div>
+            ) : (
+                notifications.map(notif => (
+                    <div
+                        key={notif.id}
+                        className={`p-3 border-bottom position-relative ${!notif.read ? 'bg-primary bg-opacity-10' : ''}`}
+                        onClick={() => handleNotificationClick(notif)}
+                        style={{ whiteSpace: 'normal', cursor: 'pointer' }}
+                    >
+                        <div className="d-flex gap-3">
+                            <div className={`rounded-circle flex-shrink-0 d-flex align-items-center justify-content-center ${getBgColor(notif.type)}`} style={{ width: '40px', height: '40px' }}>
+                                {getIcon(notif.type)}
+                            </div>
+                            <div className="flex-grow-1">
+                                <div className="d-flex justify-content-between align-items-start">
+                                    <h6 className={`mb-1 small fw-bold ${!notif.read ? 'text-dark' : 'text-muted'}`}>{notif.title}</h6>
+                                    {!notif.read && <span className="bg-primary rounded-circle" style={{ width: '8px', height: '8px', marginTop: '6px' }}></span>}
+                                </div>
+                                <p className="mb-1 text-muted small lh-sm">{notif.message}</p>
+                                {notif.amount > 0 && (
+                                    <span className={`fw-bold small ${notif.type === 'TRANSFER_SENT' ? 'text-danger' : 'text-success'}`}>
+                                        {notif.type === 'TRANSFER_SENT' ? '-' : '+'}{notif.currency} {notif.amount.toLocaleString()}
+                                    </span>
+                                )}
+                                <div>
+                                    <small className="text-secondary fw-semibold" style={{ fontSize: '0.7rem' }}>
+                                        {formatTime(notif.createdAt)}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ))
+            )}
+        </>
+    );
+
+    // Bell button for mobile
+    const BellIcon = () => (
+        <motion.div
+            animate={unreadCount > 0 ? { rotate: [0, -10, 10, -10, 10, 0] } : {}}
+            transition={{ repeat: Infinity, repeatDelay: 5, duration: 0.5 }}
+        >
+            <FaBell size={20} className="text-secondary" />
+        </motion.div>
+    );
+
+    // Mobile: Show Modal
+    if (isMobile) {
+        return (
+            <>
+                <button
+                    className="btn btn-link p-0 text-decoration-none text-dark position-relative"
+                    onClick={handleOpen}
+                    aria-label="Notifications"
                 >
-                    <FaBell size={20} className="text-secondary" />
-                </motion.div>
+                    <BellIcon />
+                    {unreadCount > 0 && (
+                        <Badge bg="danger" pill className="position-absolute top-0 start-100 translate-middle border border-light" style={{ fontSize: '0.6rem' }}>
+                            {unreadCount > 9 ? '9+' : unreadCount}
+                        </Badge>
+                    )}
+                </button>
+
+                <Modal
+                    show={show}
+                    onHide={handleClose}
+                    centered
+                    className="notifications-modal"
+                >
+                    <Modal.Header closeButton className="border-bottom">
+                        <Modal.Title className="fw-bold fs-5 d-flex align-items-center">
+                            <FaBell className="me-2 text-primary" />
+                            Notifications
+                        </Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body className="p-0" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+                        {unreadCount > 0 && (
+                            <div className="p-2 bg-light border-bottom d-flex justify-content-end">
+                                <Button variant="link" className="text-decoration-none p-0 small fw-bold d-flex align-items-center gap-1" onClick={markAllRead} style={{ fontSize: '0.8rem' }}>
+                                    <FaCheckDouble size={12} /> Mark all read
+                                </Button>
+                            </div>
+                        )}
+                        <NotificationList />
+                    </Modal.Body>
+                    <Modal.Footer className="justify-content-center py-3 bg-light border-top">
+                        <a href="/transactions" className="text-decoration-none small text-primary fw-bold" onClick={handleClose}>
+                            View All Transactions
+                        </a>
+                    </Modal.Footer>
+                </Modal>
+            </>
+        );
+    }
+
+    // Desktop: Show Dropdown
+    return (
+        <Dropdown align="end" className="notification-dropdown" show={show} onToggle={(isOpen) => {
+            setShow(isOpen);
+            if (isOpen) loadNotifications();
+        }}>
+            <Dropdown.Toggle variant="link" className="p-0 text-decoration-none text-dark position-relative no-caret" id="dropdown-notif">
+                <BellIcon />
                 {unreadCount > 0 && (
                     <Badge bg="danger" pill className="position-absolute top-0 start-100 translate-middle border border-light" style={{ fontSize: '0.6rem' }}>
                         {unreadCount > 9 ? '9+' : unreadCount}
@@ -145,48 +264,7 @@ const NotificationDropdown = () => {
                 </div>
 
                 <div className="overflow-auto" style={{ maxHeight: '400px' }}>
-                    {loading ? (
-                        <div className="p-4 text-center">
-                            <Spinner size="sm" />
-                        </div>
-                    ) : notifications.length === 0 ? (
-                        <div className="p-5 text-center text-muted">
-                            <FaBell size={32} className="mb-2 opacity-50" />
-                            <p className="mb-0 small">No notifications yet</p>
-                        </div>
-                    ) : (
-                        notifications.map(notif => (
-                            <Dropdown.Item
-                                key={notif.id}
-                                className={`p-3 border-bottom position-relative ${!notif.read ? 'bg-primary bg-opacity-10' : ''}`}
-                                onClick={() => handleNotificationClick(notif)}
-                                style={{ whiteSpace: 'normal' }}
-                            >
-                                <div className="d-flex gap-3">
-                                    <div className={`rounded-circle flex-shrink-0 d-flex align-items-center justify-content-center ${getBgColor(notif.type)}`} style={{ width: '40px', height: '40px' }}>
-                                        {getIcon(notif.type)}
-                                    </div>
-                                    <div className="flex-grow-1">
-                                        <div className="d-flex justify-content-between align-items-start">
-                                            <h6 className={`mb-1 small fw-bold ${!notif.read ? 'text-dark' : 'text-muted'}`}>{notif.title}</h6>
-                                            {!notif.read && <span className="bg-primary rounded-circle" style={{ width: '8px', height: '8px', marginTop: '6px' }}></span>}
-                                        </div>
-                                        <p className="mb-1 text-muted small lh-sm">{notif.message}</p>
-                                        {notif.amount > 0 && (
-                                            <span className={`fw-bold small ${notif.type === 'TRANSFER_SENT' ? 'text-danger' : 'text-success'}`}>
-                                                {notif.type === 'TRANSFER_SENT' ? '-' : '+'}{notif.currency} {notif.amount.toLocaleString()}
-                                            </span>
-                                        )}
-                                        <div>
-                                            <small className="text-secondary fw-semibold" style={{ fontSize: '0.7rem' }}>
-                                                {formatTime(notif.createdAt)}
-                                            </small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </Dropdown.Item>
-                        ))
-                    )}
+                    <NotificationList />
                 </div>
                 <div className="p-2 text-center bg-light border-top">
                     <a href="/transactions" className="text-decoration-none small text-muted fw-bold">View All Transactions</a>
@@ -197,3 +275,4 @@ const NotificationDropdown = () => {
 };
 
 export default NotificationDropdown;
+
