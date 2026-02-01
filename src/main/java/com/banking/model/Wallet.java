@@ -28,6 +28,7 @@ public class Wallet {
     private User user;
 
     @OneToMany(mappedBy = "wallet", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private java.util.List<Transaction> transactions;
 
     public Wallet(String currency, String symbol, double balance, String flag, String name, User user) {
