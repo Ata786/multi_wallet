@@ -8,17 +8,17 @@ const LandingPage = () => {
     return (
         <div className="bg-gradient-landing">
             <AppNavbar />
-            <Container className="py-5 text-center text-white">
-                <Row className="justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
-                    <Col lg={8}>
-                        <h1 className="display-3 fw-bold mb-4">Manage Multiple Currencies in One Place</h1>
-                        <p className="lead mb-5 fs-4" style={{ opacity: 0.9 }}>
+            <Container className="py-4 py-md-5 text-center text-white px-3 px-md-4">
+                <Row className="justify-content-center align-items-center" style={{ minHeight: '50vh' }}>
+                    <Col lg={8} className="px-2 px-md-3">
+                        <h1 className="display-5 display-md-3 fw-bold mb-3 mb-md-4 landing-title">Manage Multiple Currencies in One Place</h1>
+                        <p className="lead mb-4 mb-md-5 fs-6 fs-md-4 landing-subtitle" style={{ opacity: 0.9 }}>
                             Real-time exchange rates, instant transfers, and fraud protection.
                             The smarter way to bank globally.
                         </p>
-                        <div className="d-flex gap-3 justify-content-center mb-5">
-                            <Button as={Link} to="/login" variant="outline-light" size="lg" className="px-5 rounded-pill">Login</Button>
-                            <Button as={Link} to="/register" variant="light" size="lg" className="px-5 rounded-pill text-primary fw-bold">Get Started</Button>
+                        <div className="d-flex flex-column flex-sm-row gap-2 gap-sm-3 justify-content-center mb-4 mb-md-5 px-3 px-sm-0">
+                            <Button as={Link} to="/login" variant="outline-light" size="lg" className="px-4 px-sm-5 py-2 rounded-pill landing-btn">Login</Button>
+                            <Button as={Link} to="/register" variant="light" size="lg" className="px-4 px-sm-5 py-2 rounded-pill text-primary fw-bold landing-btn">Get Started</Button>
                         </div>
                     </Col>
                 </Row>
