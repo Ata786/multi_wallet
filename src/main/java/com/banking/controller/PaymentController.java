@@ -36,12 +36,23 @@ public class PaymentController {
     public void init() {
         if (stripeSecretKey != null && !stripeSecretKey.isEmpty()) {
             Stripe.apiKey = stripeSecretKey;
+            System.out.println("Stripe API key configured successfully");
+        } else {
+            System.out.println("WARNING: Stripe API key not configured. Payment features will not work.");
         }
     }
 
     @PostMapping("/create-intent")
     public ResponseEntity<?> createPaymentIntent(@RequestBody CreatePaymentIntentRequest request) {
         try {
+            // Check if Stripe API key is configured
+            if (stripeSecretKey == null || stripeSecretKey.isEmpty()) {
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "Payment service not configured. Please contact support.");
+                error.put("code", "STRIPE_NOT_CONFIGURED");
+                return ResponseEntity.badRequest().body(error);
+            }
+
             PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
                     .setAmount((long) (request.getAmount() * 100)) // Amount in cents
                     .setCurrency(request.getCurrency().toLowerCase())
@@ -56,7 +67,9 @@ public class PaymentController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
         }
     }
 
