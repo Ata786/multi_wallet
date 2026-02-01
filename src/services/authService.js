@@ -1,5 +1,5 @@
-const API_URL = "http://localhost:8080/api/auth";
-const WALLET_API_URL = "http://localhost:8080/api/wallets";
+const API_URL = "https://joyful-cooperation-production.up.railway.app:8080/api/auth";
+const WALLET_API_URL = "https://joyful-cooperation-production.up.railway.app:8080/api/wallets";
 
 const register = (name, email, password, phone, country) => {
     return fetch(API_URL + "/signup", {
